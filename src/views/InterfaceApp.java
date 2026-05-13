@@ -2,6 +2,8 @@ package views;
 
 import controllers.AssinaturaController;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -10,230 +12,342 @@ import javax.swing.*;
 import models.PlanoAssinatura;
 import models.Produto;
 
-/**
- * Camada de Fronteira (Boundary) - Interface Gráfica Swing
- * N2: Versão Final com Resumo em Fonte Padrão e Estética Windows
- */
 public class InterfaceApp {
 
     private static AssinaturaController controller;
     private static PlanoAssinatura planoEscolhido;
     private static int limitePlano;
+    private static String tokenGerado;
+    private static String celularUsuario;
+
+    private static JFrame frame;
+    private static final int LARGURA = 360;
+    private static final int ALTURA = 640;
 
     public static void main(String[] args) {
-        // Aplica o visual do sistema operacional (Windows/Linux/Mac)
-        try { 
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); 
-        } catch (Exception ex) {}
+        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception ex) {}
 
         controller = new AssinaturaController();
-        Random random = new Random();
-
-        // --- TELAS 1 E 2: LOGIN E TOKEN (4 DÍGITOS) ---
-        String celular = "";
-        while (true) {
-            celular = JOptionPane.showInputDialog(null, 
-                "Digite seu celular com DDD (11 dígitos):", 
-                "Login - Serviço de Feira", JOptionPane.QUESTION_MESSAGE);
-            
-            if (celular == null) System.exit(0); 
-            
-            if (celular.replaceAll("[^0-9]", "").length() == 11) {
-                break;
-            }
-            JOptionPane.showMessageDialog(null, "Número inválido!", "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-
-        String tokenGerado = String.format("%04d", random.nextInt(10000));
-        JOptionPane.showMessageDialog(null, 
-            "SMS enviado para " + celular + "\nTOKEN: [" + tokenGerado + "]", 
-            "Simulação de Token", JOptionPane.INFORMATION_MESSAGE);
-
-        String tokenDigitado = JOptionPane.showInputDialog(null, "Digite o Token de 4 dígitos:", "Validação", JOptionPane.QUESTION_MESSAGE);
         
-        if (tokenDigitado != null && tokenDigitado.equals(tokenGerado)) {
-            controller.realizarLogin(celular);
-        } else {
-            JOptionPane.showMessageDialog(null, "Token inválido!", "Erro", JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
-        }
+        frame = new JFrame("App Feira");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(LARGURA, ALTURA);
+        frame.setResizable(false);
+        frame.setLocationRelativeTo(null);
 
-        // --- TELA 3: ESCOLHA DE PLANO ---
-        String[] opcoesPlanos = {
-            "Plano Essencial - R$ 39,90 (Até 5 itens)", 
-            "Plano Família - R$ 69,90 (Até 10 itens)", 
-            "Plano Premium - R$ 99,90 (Até 15 itens)"
-        };
-
-        String selecao = (String) JOptionPane.showInputDialog(null, 
-                "Selecione o plano desejado:", "Planos", 
-                JOptionPane.QUESTION_MESSAGE, null, opcoesPlanos, opcoesPlanos[0]);
-        
-        if (selecao == null) System.exit(0);
-
-        if (selecao.contains("Essencial")) {
-            planoEscolhido = new PlanoAssinatura("Plano Essencial", 39.90, 5);
-            limitePlano = 5;
-        } else if (selecao.contains("Família")) {
-            planoEscolhido = new PlanoAssinatura("Plano Família", 69.90, 10);
-            limitePlano = 10;
-        } else {
-            planoEscolhido = new PlanoAssinatura("Plano Premium", 99.90, 15);
-            limitePlano = 15;
-        }
-        
-        controller.registrarPlano(planoEscolhido);
-
-        exibirJanelaProdutos();
+        exibirTelaLogin();
+        frame.setVisible(true);
     }
 
-    private static void exibirJanelaProdutos() {
-        JFrame frame = new JFrame("Montagem da Cesta");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(500, 650);
-        frame.setLayout(new BorderLayout(15, 15));
+    private static JButton criarBotaoPrincipal(String texto) {
+        JButton btn = new JButton(texto);
+        btn.setBackground(Color.BLACK);
+        btn.setForeground(Color.WHITE);
+        btn.setOpaque(true);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btn.setPreferredSize(new Dimension(LARGURA, 60));
+        return btn;
+    }
+
+    private static JPanel criarHeader(String titulo, String subtitulo) {
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.setBackground(new Color(245, 245, 245));
+        header.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+
+        JLabel lblTitulo = new JLabel(titulo, JLabel.CENTER);
+        lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel lblSub = new JLabel(subtitulo, JLabel.CENTER);
+        lblSub.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        lblSub.setForeground(Color.GRAY);
+        lblSub.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        header.add(lblTitulo);
+        header.add(Box.createRigidArea(new Dimension(0, 5)));
+        header.add(lblSub);
+        return header;
+    }
+
+    private static void exibirTelaLogin() {
+        frame.getContentPane().removeAll();
+        frame.setLayout(new BorderLayout());
+
+        frame.add(criarHeader("BEM-VINDO", "Identifique-se para começar"), BorderLayout.NORTH);
+
+        JPanel corpo = new JPanel(new GridBagLayout());
+        corpo.setBackground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        
+        // --- MESMO DESIGN DA TELA DE SMS ---
+        JTextField txtCelular = new JTextField(12);
+        txtCelular.setHorizontalAlignment(JTextField.CENTER);
+        txtCelular.setFont(new Font("SansSerif", Font.BOLD, 20));
+        txtCelular.setBorder(BorderFactory.createTitledBorder("Celular (com DDD)"));
+        
+        // Bloqueia letras e limita a 11 números no celular
+        txtCelular.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent e) {
+                if (!Character.isDigit(e.getKeyChar()) || txtCelular.getText().length() >= 11) {
+                    e.consume(); 
+                }
+            }
+        });
+        
+        gbc.gridx = 0; gbc.gridy = 0;
+        corpo.add(txtCelular, gbc);
+        frame.add(corpo, BorderLayout.CENTER);
+
+        JButton btnLogin = criarBotaoPrincipal("ENVIAR CÓDIGO");
+        btnLogin.addActionListener(e -> {
+            celularUsuario = txtCelular.getText().replaceAll("[^0-9]", "");
+            if (celularUsuario.length() == 11) {
+                tokenGerado = String.format("%04d", new Random().nextInt(10000));
+                JOptionPane.showMessageDialog(frame, "SMS enviado para " + celularUsuario + "\nTOKEN: [" + tokenGerado + "]");
+                exibirTelaSMS();
+            } else {
+                JOptionPane.showMessageDialog(frame, "Digite os 11 números do celular.");
+            }
+        });
+        frame.add(btnLogin, BorderLayout.SOUTH);
+
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    private static void exibirTelaSMS() {
+        frame.getContentPane().removeAll();
+        frame.add(criarHeader("VALIDAÇÃO", "Enviamos um código para seu celular"), BorderLayout.NORTH);
+
+        JPanel corpo = new JPanel(new GridBagLayout());
+        corpo.setBackground(Color.WHITE);
+        
+        // --- DESIGN DE SMS ---
+        JTextField txtToken = new JTextField(10);
+        txtToken.setHorizontalAlignment(JTextField.CENTER);
+        txtToken.setFont(new Font("SansSerif", Font.BOLD, 20));
+        txtToken.setBorder(BorderFactory.createTitledBorder("Código de 4 dígitos"));
+        
+        // Limita o SMS a 4 números
+        txtToken.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent e) {
+                if (!Character.isDigit(e.getKeyChar()) || txtToken.getText().length() >= 4) {
+                    e.consume(); 
+                }
+            }
+        });
+
+        corpo.add(txtToken);
+        frame.add(corpo, BorderLayout.CENTER);
+
+        JButton btnValidar = criarBotaoPrincipal("VALIDAR ACESSO");
+        btnValidar.addActionListener(e -> {
+            if (txtToken.getText().equals(tokenGerado)) {
+                controller.realizarLogin(celularUsuario);
+                exibirTelaPlanos();
+            } else {
+                JOptionPane.showMessageDialog(frame, "Token incorreto!");
+            }
+        });
+        frame.add(btnValidar, BorderLayout.SOUTH);
+
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    private static void exibirTelaPlanos() {
+        frame.getContentPane().removeAll();
+        frame.add(criarHeader("PLANOS", "Selecione sua assinatura semanal"), BorderLayout.NORTH);
+
+        JPanel corpo = new JPanel();
+        corpo.setLayout(new BoxLayout(corpo, BoxLayout.Y_AXIS));
+        corpo.setBackground(Color.WHITE);
+        corpo.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        String[] opcoes = {"Plano Essencial - R$ 39,90", "Plano Família - R$ 69,90", "Plano Premium - R$ 99,90"};
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (String s : opcoes) model.addElement(s);
+        JList<String> listaPlanos = new JList<>(model);
+        listaPlanos.setSelectedIndex(0);
+        listaPlanos.setFixedCellHeight(50);
+        listaPlanos.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+
+        corpo.add(listaPlanos);
+        frame.add(corpo, BorderLayout.CENTER);
+
+        JButton btnPlano = criarBotaoPrincipal("ESCOLHER PLANO");
+        btnPlano.addActionListener(e -> {
+            String selecao = listaPlanos.getSelectedValue();
+            if (selecao.contains("Essencial")) { planoEscolhido = new PlanoAssinatura("Plano Essencial", 39.90, 5); limitePlano = 5; }
+            else if (selecao.contains("Família")) { planoEscolhido = new PlanoAssinatura("Plano Família", 69.90, 10); limitePlano = 10; }
+            else { planoEscolhido = new PlanoAssinatura("Plano Premium", 99.90, 15); limitePlano = 15; }
+            
+            controller.registrarPlano(planoEscolhido);
+            exibirTelaProdutos();
+        });
+        frame.add(btnPlano, BorderLayout.SOUTH);
+
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    private static void exibirTelaProdutos() {
+        frame.getContentPane().removeAll();
+        frame.add(criarHeader("MONTE SUA CESTA", "Limite: " + limitePlano + " itens"), BorderLayout.NORTH);
 
         JPanel panelProdutos = new JPanel();
         panelProdutos.setLayout(new BoxLayout(panelProdutos, BoxLayout.Y_AXIS));
-        panelProdutos.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panelProdutos.setBackground(Color.WHITE);
         JScrollPane scrollPane = new JScrollPane(panelProdutos);
+        scrollPane.setBorder(null);
 
         Produto[] catalogo = {
             new Produto("Maçã", 3.0), new Produto("Banana", 2.5), new Produto("Uva", 4.0),
             new Produto("Laranja", 2.0), new Produto("Morango", 5.0), new Produto("Cenoura", 2.0),
-            new Produto("Tomate", 2.5), new Produto("Abobrinha", 3.0), new Produto("Batata", 4.0),
-            new Produto("Cebola", 2.0), new Produto("Alface", 3.0), new Produto("Espinafre", 3.5),
-            new Produto("Couve", 2.5), new Produto("Rúcula", 3.0), new Produto("Brócolis", 4.0)
+            new Produto("Tomate", 2.5), new Produto("Batata", 4.0), new Produto("Alface", 3.0),
+            new Produto("Brócolis", 4.0), new Produto("Cebola", 2.0), new Produto("Couve", 2.5)
         };
 
         Map<Produto, JSpinner> seletores = new HashMap<>();
 
         for (Produto prod : catalogo) {
-            JPanel itemPanel = new JPanel(new BorderLayout());
-            itemPanel.setMaximumSize(new Dimension(450, 40));
-            itemPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
+            JPanel item = new JPanel(new BorderLayout());
+            item.setBackground(Color.WHITE);
+            item.setMaximumSize(new Dimension(LARGURA, 60));
+            item.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
-            JLabel label = new JLabel(prod.getNome() + " - R$ " + String.format("%.2f", prod.getPreco()));
-            // Usando fonte SansSerif (Normal)
-            label.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            JLabel name = new JLabel("<html>" + prod.getNome() + "<br><font color='gray'>R$ " + String.format("%.2f", prod.getPreco()) + "</font></html>");
+            JSpinner spin = new JSpinner(new SpinnerNumberModel(0, 0, limitePlano, 1));
             
-            JSpinner spinner = new JSpinner(new SpinnerNumberModel(0, 0, limitePlano, 1));
-            seletores.put(prod, spinner);
-
-            JPanel pnlQtd = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            pnlQtd.add(new JLabel("Qtd:"));
-            pnlQtd.add(spinner);
-            
-            itemPanel.add(label, BorderLayout.CENTER);
-            itemPanel.add(pnlQtd, BorderLayout.EAST);
-            panelProdutos.add(itemPanel);
+            seletores.put(prod, spin);
+            item.add(name, BorderLayout.CENTER);
+            item.add(spin, BorderLayout.EAST);
+            panelProdutos.add(item);
+            panelProdutos.add(new JSeparator());
         }
 
-        // BOTÃO PRETO
-        JButton btnAvancar = new JButton("ADICIONAR ITENS E FINALIZAR");
-        btnAvancar.setForeground(Color.BLACK); 
-        btnAvancar.setFont(new Font("SansSerif", Font.BOLD, 13));
-        btnAvancar.setPreferredSize(new Dimension(0, 50));
-        btnAvancar.setFocusPainted(false);
+        JButton btnCesta = criarBotaoPrincipal("REVISAR E PAGAR");
+        btnCesta.addActionListener(e -> {
+            int total = 0;
+            for (JSpinner s : seletores.values()) total += (int) s.getValue();
 
-        btnAvancar.addActionListener(e -> {
-            int totalSelecionado = 0;
-            for (JSpinner s : seletores.values()) totalSelecionado += (int) s.getValue();
-
-            if (totalSelecionado > limitePlano) {
-                JOptionPane.showMessageDialog(frame, "Limite excedido!", "Erro", JOptionPane.ERROR_MESSAGE);
-            } else if (totalSelecionado == 0) {
-                JOptionPane.showMessageDialog(frame, "Cesta vazia!");
-            } else {
-                boolean prosseguir = true;
-                if (totalSelecionado < limitePlano) {
-                    int confirm = JOptionPane.showConfirmDialog(frame, "Cesta incompleta. Deseja fechar assim mesmo?", "Confirmar", JOptionPane.YES_NO_OPTION);
-                    if (confirm != JOptionPane.YES_OPTION) prosseguir = false;
+            if (total > limitePlano) JOptionPane.showMessageDialog(frame, "Limite excedido!");
+            else if (total == 0) JOptionPane.showMessageDialog(frame, "Selecione algo!");
+            else {
+                for (Map.Entry<Produto, JSpinner> entry : seletores.entrySet()) {
+                    for (int i = 0; i < (int) entry.getValue().getValue(); i++) controller.adicionarNaCesta(entry.getKey());
                 }
-
-                if (prosseguir) {
-                    for (Map.Entry<Produto, JSpinner> entry : seletores.entrySet()) {
-                        int qtd = (int) entry.getValue().getValue();
-                        for (int i = 0; i < qtd; i++) controller.adicionarNaCesta(entry.getKey());
-                    }
-                    frame.dispose();
-                    irParaPagamento();
-                }
+                exibirTelaPagamento();
             }
         });
-
         frame.add(scrollPane, BorderLayout.CENTER);
-        frame.add(btnAvancar, BorderLayout.SOUTH);
-        frame.setLocationRelativeTo(null); 
-        frame.setVisible(true);
+        frame.add(btnCesta, BorderLayout.SOUTH);
+
+        frame.revalidate();
+        frame.repaint();
     }
 
-    private static void irParaPagamento() {
-        // Agrupar produtos para o resumo
-        Map<String, Integer> qtdPorItem = new TreeMap<>();
-        Map<String, Double> precoUnPorItem = new HashMap<>();
+    private static void exibirTelaPagamento() {
+        frame.getContentPane().removeAll();
+        frame.add(criarHeader("PAGAMENTO", "Confira os itens selecionados"), BorderLayout.NORTH);
+
+        JPanel corpo = new JPanel();
+        corpo.setLayout(new BoxLayout(corpo, BoxLayout.Y_AXIS));
+        corpo.setBackground(Color.WHITE);
+        corpo.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        Map<String, Integer> qtds = new TreeMap<>();
+        Map<String, Double> precos = new HashMap<>();
+        double totalProd = 0;
 
         for (Produto p : controller.getItensCesta()) {
-            qtdPorItem.put(p.getNome(), qtdPorItem.getOrDefault(p.getNome(), 0) + 1);
-            precoUnPorItem.put(p.getNome(), p.getPreco());
+            qtds.put(p.getNome(), qtds.getOrDefault(p.getNome(), 0) + 1);
+            precos.put(p.getNome(), p.getPreco());
         }
 
-        // Criar painel de resumo com fonte normal
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        for (String n : qtds.keySet()) {
+            int q = qtds.get(n); double un = precos.get(n); double sub = q * un;
+            totalProd += sub;
+            JLabel lbl = new JLabel("• " + n + ": " + q + "x R$" + un + " = R$" + sub);
+            lbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            corpo.add(lbl);
+        }
+
+        corpo.add(Box.createRigidArea(new Dimension(0, 15)));
+        corpo.add(new JSeparator());
+        corpo.add(Box.createRigidArea(new Dimension(0, 5)));
         
-        JLabel title = new JLabel("Resumo da Assinatura");
-        title.setFont(new Font("SansSerif", Font.BOLD, 15));
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mainPanel.add(title);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        JLabel lblTotal = new JLabel("TOTAL DO PLANO: R$ " + String.format("%.2f", planoEscolhido.getValor()));
+        lblTotal.setFont(new Font("SansSerif", Font.BOLD, 14));
+        corpo.add(lblTotal);
 
-        double somaProdutos = 0;
-        for (String nome : qtdPorItem.keySet()) {
-            int qtd = qtdPorItem.get(nome);
-            double un = precoUnPorItem.get(nome);
-            double sub = qtd * un;
-            somaProdutos += sub;
-            
-            JLabel itemLabel = new JLabel(String.format("• %s: %dx R$ %.2f = R$ %.2f", nome, qtd, un, sub));
-            itemLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
-            itemLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            mainPanel.add(itemLabel);
-        }
+        JScrollPane scrollResumo = new JScrollPane(corpo);
+        scrollResumo.setBorder(null);
+        frame.add(scrollResumo, BorderLayout.CENTER);
 
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        mainPanel.add(new JSeparator());
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        // --- RODAPÉ: CARTÃO DE CRÉDITO COM LIMITE FÍSICO ---
+        JPanel footer = new JPanel(new BorderLayout());
+        footer.setBackground(new Color(245, 245, 245));
+        footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.LIGHT_GRAY));
 
-        JLabel totalItens = new JLabel("Soma dos itens: R$ " + String.format("%.2f", somaProdutos));
-        totalItens.setFont(new Font("SansSerif", Font.ITALIC, 12));
-        mainPanel.add(totalItens);
-
-        JLabel totalPlano = new JLabel("Valor do Plano (" + planoEscolhido.getNomePlano() + "): R$ " + String.format("%.2f", planoEscolhido.getValor()));
-        totalPlano.setFont(new Font("SansSerif", Font.BOLD, 14));
-        mainPanel.add(totalPlano);
-
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-        JLabel cardLabel = new JLabel("Informe os 16 dígitos do seu cartão:");
-        cardLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        mainPanel.add(cardLabel);
-
-        // Pedir o cartão
-        String cartao = "";
-        while (true) {
-            cartao = JOptionPane.showInputDialog(null, mainPanel, "Pagamento", JOptionPane.QUESTION_MESSAGE);
-            
-            if (cartao == null) System.exit(0);
-            if (cartao.replaceAll("[^0-9]", "").length() == 16) break;
-            
-            JOptionPane.showMessageDialog(null, "O cartão deve conter 16 números!", "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-
-        String protocolo = controller.finalizarAssinatura(cartao);
+        JPanel pnlCartao = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 15));
+        pnlCartao.setBackground(new Color(245, 245, 245));
         
-        // Mensagem final
-        String finalMsg = "Sucesso! Seu protocolo é: " + protocolo + "\n\nO comprovante foi salvo em 'assinaturas.txt'.";
-        JOptionPane.showMessageDialog(null, finalMsg, "Assinatura Concluída", JOptionPane.INFORMATION_MESSAGE);
-        System.exit(0);
+        JLabel lblCartao = new JLabel("Cartão: ");
+        lblCartao.setFont(new Font("SansSerif", Font.BOLD, 12));
+        pnlCartao.add(lblCartao);
+
+        JTextField[] camposCartao = new JTextField[4];
+        for (int i = 0; i < 4; i++) {
+            camposCartao[i] = new JTextField(5);
+            camposCartao[i].setHorizontalAlignment(JTextField.CENTER);
+            camposCartao[i].setFont(new Font("Monospaced", Font.BOLD, 14));
+            
+            final int index = i;
+            camposCartao[i].addKeyListener(new KeyAdapter() {
+                // TRAVA DE CARACTERES
+                public void keyTyped(KeyEvent e) {
+                    char c = e.getKeyChar();
+                    if (!Character.isDigit(c) || camposCartao[index].getText().length() >= 4) {
+                        e.consume(); 
+                    }
+                }
+                
+                // PULO AUTOMÁTICO
+                public void keyReleased(KeyEvent e) {
+                    if (camposCartao[index].getText().length() == 4 && index < 3) {
+                        camposCartao[index + 1].requestFocus();
+                    }
+                }
+            });
+            
+            pnlCartao.add(camposCartao[i]);
+            if (i < 3) pnlCartao.add(new JLabel("-"));
+        }
+
+        footer.add(pnlCartao, BorderLayout.CENTER);
+
+        JButton btnFinal = criarBotaoPrincipal("CONFIRMAR ASSINATURA");
+        btnFinal.addActionListener(e -> {
+            String cartaoCompleto = camposCartao[0].getText() + camposCartao[1].getText() + 
+                                    camposCartao[2].getText() + camposCartao[3].getText();
+            
+            if (cartaoCompleto.length() == 16) {
+                String protocolo = controller.finalizarAssinatura(cartaoCompleto);
+                JOptionPane.showMessageDialog(frame, "Sucesso!\nProtocolo: " + protocolo);
+                System.exit(0);
+            } else {
+                JOptionPane.showMessageDialog(frame, "Preencha todos os 16 dígitos do cartão!", "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        footer.add(btnFinal, BorderLayout.SOUTH);
+        frame.add(footer, BorderLayout.SOUTH);
+
+        frame.revalidate();
+        frame.repaint();
     }
 }
