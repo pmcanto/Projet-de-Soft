@@ -1,26 +1,36 @@
+#!/bin/bash
+
 clear
-
 echo "========================================"
-echo "  BUILD AUTOMATICO - SERVICO DE FEIRA"
+echo "   AUTO-INSTALLER E EXECUÇÃO (LINUX)"
 echo "========================================"
 
-cd src
+# 1. Função para instalar o Java se necessário
+install_java() {
+    echo "[!] Java não detectado. Tentando instalar..."
+    if command -v apt &> /dev/null; then
+        sudo apt update && sudo apt install -y openjdk-21-jdk
+    elif command -v pacman &> /dev/null; then
+        sudo pacman -Syu jdk-openjdk
+    else
+        echo "[ERRO] Gerenciador de pacotes não suportado."
+        exit 1
+    fi
+}
 
-echo "[1/2] Compilando classes (Padrao BCE)..."
-javac views/InterfaceApp.java
-
-if [ $? -ne 0 ]; then
-    echo ""
-    echo "[ERRO] Falha na compilação. Verifique o código."
-    exit 1
+# 2. Check de dependências
+if ! command -v java &> /dev/null; then
+    install_java
 fi
 
-echo "[2/2] Iniciando a aplicação..."
-echo "----------------------------------------"
-java views.InterfaceApp
+# 3. Compilação e Execução
+echo "[*] Compilando projeto..."
+cd src || exit
+javac views/InterfaceApp.java
 
-echo ""
-echo "----------------------------------------"
-echo "Processo finalizado."
-
-clear
+if [ $? -eq 0 ]; then
+    echo "[*] Iniciando Interface Gráfica (Swing)..."
+    java views.InterfaceApp
+else
+    echo "[ERRO] Falha na compilação."
+fi

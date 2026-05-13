@@ -1,49 +1,73 @@
-# 🛒 Sistema de Assinatura - Serviço de Feira (Entrega N2)
+========================================================================
+    SISTEMA DE ASSINATURA - SERVIÇO DE FEIRA (ENTREGA N2)
+========================================================================
 
-Este repositório contém a implementação em Java do fluxo principal do Caso de Uso **"Assinar Serviço de Feira"**, correspondente à entrega N2 da disciplina de Projeto de Software.
+Este repositório contém a implementação funcional do Caso de Uso "Assinar 
+Serviço de Feira", desenvolvida para a disciplina de Projeto de Software.
+O sistema utiliza a arquitetura BCE (Boundary-Control-Entity) e uma 
+Interface Gráfica de Usuário (GUI) construída com Java Swing.
 
-O código foi desenvolvido traduzindo o modelo dinâmico (Diagrama de Sequência UML) e o modelo estrutural (Diagrama de Classes) em uma aplicação prática utilizando o padrão **BCE (Boundary-Control-Entity)**.
+------------------------------------------------------------------------
+1. INTEGRANTES
+------------------------------------------------------------------------
+* Nicolas Aguiar - 10425450
+* Pedro Canto - 10426546
 
-## 👥 Integrantes
-* Nicolas Aguiar (10425450)
-* Pedro Canto (10426546)
+------------------------------------------------------------------------
+2. TECNOLOGIAS E ARQUITETURA
+------------------------------------------------------------------------
+* Linguagem: Java 21
+* Interface: Java Swing (Janelas nativas)
+* Persistência: Arquivo de texto ("assinaturas.txt")
+* Padrão: BCE (Fronteira, Controle e Entidade)
+    - views/: Interface e diálogos com o usuário.
+    - controllers/: Coordenação das regras de negócio.
+    - models/: Entidades (Produto, Assinante, Plano, Cesta).
+    - repositories/: Camada de gravação de dados.
 
-## 🛠️ Tecnologias e Estrutura
-* **Linguagem:** Java (Sem uso de frameworks externos)
-* **Persistência:** Manipulação nativa de arquivos (`.txt`)
-* **Padrão de Arquitetura:** BCE (Fronteira, Controle e Entidade)
-  * `InterfaceApp.java` atua como a Fronteira (View).
-  * `AssinaturaController.java` orquestra as regras de negócio.
-  * `Produto.java`, `Assinante.java`, `CestaSemanal.java`, etc., representam as Entidades de Domínio.
+------------------------------------------------------------------------
+3. COMO EXECUTAR VIA SCRIPTS (RECOMENDADO)
+------------------------------------------------------------------------
+Os scripts verificam o ambiente e iniciam o programa automaticamente.
 
-## 🚀 Como Compilar e Executar (Via Terminal)
+No WINDOWS:
+    Basta dar um duplo clique no arquivo: executar.bat
+    (Ou execute ".\executar.bat" via terminal na raiz do projeto)
 
-Como as classes não utilizam pacotes nomeados (estão no *default package*), o processo de compilação e execução é bastante simples. 
+No LINUX / CODESPACES:
+    1. Dê permissão de execução: chmod +x executar.sh
+    2. Rode o script: ./executar.sh
 
-### Pré-requisitos
-Certifique-se de ter o [Java JDK](https://www.oracle.com/br/java/technologies/downloads/) instalado em sua máquina. Você pode verificar executando `java -version` no seu terminal.
+------------------------------------------------------------------------
+4. COMO EXECUTAR MANUALMENTE (TERMINAL)
+------------------------------------------------------------------------
+Caso prefira realizar os passos um a um:
 
-### Passo 1: Navegue até a pasta do código
-Abra o terminal (Prompt de Comando, PowerShell ou Terminal do Linux/Mac) e vá até a pasta onde os arquivos `.java` estão salvos:
-```bash
-cd src
+1. Abra o terminal na pasta raiz do projeto.
 
-### Passo 2: Compile os arquivos
-```bash
-javac views/InterfaceApp.java
+2. Navegue até a pasta fonte:
+   cd src
 
-### Passo 3: Executar a aplicação
-```bash
-java views.InterfaceApp
+3. Compile o projeto a partir da classe principal:
+   javac views/InterfaceApp.java
 
-### OU
+4. Execute a aplicação:
+   java views.InterfaceApp
 
-### Passo B: rodar script
-```bash
-chmod +x executar.sh
-./executar.sh
+------------------------------------------------------------------------
+5. LIMPEZA E MANUTENÇÃO (RESET)
+------------------------------------------------------------------------
+Para remover os arquivos compilados (.class) e resetar o arquivo de 
+dados (assinaturas.txt) antes de uma nova demonstração:
 
-### Passo Final/Inicial: Limpar arquivos
-```bash
-chmod +x limpar.sh
-./limpar.sh
+Via Script:
+    Windows: rodar limpar.bat
+    Linux:   rodar ./limpar.sh
+
+Via Terminal (Manual):
+    Windows: del /s /q *.class
+    Linux:   find . -name "*.class" -type f -delete
+
+========================================================================
+Link para o Vídeo na Wiki: [INSIRA O LINK AQUI]
+========================================================================

@@ -1,256 +1,239 @@
 package views;
 
 import controllers.AssinaturaController;
+import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.TreeMap;
+import javax.swing.*;
 import models.PlanoAssinatura;
 import models.Produto;
 
-import java.util.Scanner;
-import java.util.Random;
-import java.util.Map;
-import java.util.HashMap;
-
+/**
+ * Camada de Fronteira (Boundary) - Interface Gráfica Swing
+ * N2: Versão Final com Resumo em Fonte Padrão e Estética Windows
+ */
 public class InterfaceApp {
-    
-    private static void limparTela() {
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
-    }
+
+    private static AssinaturaController controller;
+    private static PlanoAssinatura planoEscolhido;
+    private static int limitePlano;
 
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        Random random = new Random();
-        AssinaturaController controller = new AssinaturaController();
+        // Aplica o visual do sistema operacional (Windows/Linux/Mac)
+        try { 
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); 
+        } catch (Exception ex) {}
 
-        // --- TELA 1: CELULAR ---
-        limparTela();
-        System.out.println("--- BEM VINDO AO SERVIÇO DE FEIRA ---");
-        
+        controller = new AssinaturaController();
+        Random random = new Random();
+
+        // --- TELAS 1 E 2: LOGIN E TOKEN (4 DÍGITOS) ---
         String celular = "";
         while (true) {
-            System.out.print("1. Digite seu celular [Tela 1] (ex: (11) 92766-7764): ");
-            celular = scanner.nextLine();
-            if (celular.replaceAll("[^0-9]", "").length() == 11) break;
-            System.out.println("[AVISO] Formato inválido! Tente novamente.\n");
+            celular = JOptionPane.showInputDialog(null, 
+                "Digite seu celular com DDD (11 dígitos):", 
+                "Login - Serviço de Feira", JOptionPane.QUESTION_MESSAGE);
+            
+            if (celular == null) System.exit(0); 
+            
+            if (celular.replaceAll("[^0-9]", "").length() == 11) {
+                break;
+            }
+            JOptionPane.showMessageDialog(null, "Número inválido!", "Erro", JOptionPane.ERROR_MESSAGE);
         }
 
-        // --- TELA 2: TOKEN DINÂMICO ---
-        while (true) {
-            String tokenGerado = String.format("%06d", random.nextInt(1000000));
-            System.out.println("\n----------------------------------------");
-            System.out.println("SMS ENVIADO PARA " + celular + ": [" + tokenGerado + "]");
-            System.out.println("----------------------------------------");
-            
-            System.out.print("2. Digite o código recebido [Tela 2]: ");
-            String tokenDigitado = scanner.nextLine();
+        String tokenGerado = String.format("%04d", random.nextInt(10000));
+        JOptionPane.showMessageDialog(null, 
+            "SMS enviado para " + celular + "\nTOKEN: [" + tokenGerado + "]", 
+            "Simulação de Token", JOptionPane.INFORMATION_MESSAGE);
 
-            if (tokenDigitado.equals(tokenGerado)) {
-                controller.realizarLogin(celular);
-                break;
-            } else {
-                System.out.println("\n❌ [ERRO] Token incorreto! Reinviando...");
-                try { Thread.sleep(1500); } catch (InterruptedException ex) {}
-                limparTela();
-                System.out.println("--- BEM VINDO AO SERVIÇO DE FEIRA ---");
-            }
+        String tokenDigitado = JOptionPane.showInputDialog(null, "Digite o Token de 4 dígitos:", "Validação", JOptionPane.QUESTION_MESSAGE);
+        
+        if (tokenDigitado != null && tokenDigitado.equals(tokenGerado)) {
+            controller.realizarLogin(celular);
+        } else {
+            JOptionPane.showMessageDialog(null, "Token inválido!", "Erro", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
         }
 
         // --- TELA 3: ESCOLHA DE PLANO ---
-        limparTela();
-        System.out.println("--- ESCOLHA SEU PLANO [Tela 3] ---");
-        System.out.println("1. Plano Essencial - R$ 39,90/semana (Até 5 itens)");
-        System.out.println("2. Plano Família   - R$ 69,90/semana (Até 10 itens)");
-        System.out.println("3. Plano Premium   - R$ 99,90/semana (Até 15 itens)");
-        System.out.print("\nSelecione uma opção (1, 2 ou 3): ");
-        
-        PlanoAssinatura planoEscolhido = null;
-        int limitePlano = 0; 
-        
-        while (planoEscolhido == null) {
-            String opcao = scanner.nextLine();
-            switch (opcao) {
-                case "1":
-                    planoEscolhido = new PlanoAssinatura("Plano Essencial", 39.90, 5);
-                    limitePlano = 5;
-                    break;
-                case "2":
-                    planoEscolhido = new PlanoAssinatura("Plano Família", 69.90, 10);
-                    limitePlano = 10;
-                    break;
-                case "3":
-                    planoEscolhido = new PlanoAssinatura("Plano Premium", 99.90, 15);
-                    limitePlano = 15;
-                    break;
-                default:
-                    System.out.print("[AVISO] Opção inválida. Escolha 1, 2 ou 3: ");
-            }
-        }
-        controller.registrarPlano(planoEscolhido);
-
-        // --- CATÁLOGO DE PRODUTOS ---
-        Produto[] catalogo = {
-            new Produto("Maçã", 3.00), new Produto("Banana", 2.50), new Produto("Uva", 4.00), new Produto("Laranja", 2.00), new Produto("Morango", 5.00),
-            new Produto("Cenoura", 2.00), new Produto("Tomate", 2.50), new Produto("Abobrinha", 3.00), new Produto("Batata", 4.00), new Produto("Cebola", 2.00),
-            new Produto("Alface", 3.00), new Produto("Espinafre", 3.50), new Produto("Couve", 2.50), new Produto("Rúcula", 3.00), new Produto("Brócolis", 4.00)
+        String[] opcoesPlanos = {
+            "Plano Essencial - R$ 39,90 (Até 5 itens)", 
+            "Plano Família - R$ 69,90 (Até 10 itens)", 
+            "Plano Premium - R$ 99,90 (Até 15 itens)"
         };
 
-        // --- TELAS 4, 5 e 6: SELEÇÃO DE PRODUTOS ---
-        int itensNaCesta = 0;
-        boolean finalizouCesta = false;
+        String selecao = (String) JOptionPane.showInputDialog(null, 
+                "Selecione o plano desejado:", "Planos", 
+                JOptionPane.QUESTION_MESSAGE, null, opcoesPlanos, opcoesPlanos[0]);
+        
+        if (selecao == null) System.exit(0);
 
-        while (itensNaCesta < limitePlano && !finalizouCesta) {
-            limparTela();
-            System.out.println("--- SELEÇÃO DE PRODUTOS [Telas 4-6] ---");
-            System.out.println("Plano atual: " + planoEscolhido.getNomePlano());
-            System.out.println("Itens na cesta: " + itensNaCesta + " de " + limitePlano);
-            System.out.println("---------------------------------------");
+        if (selecao.contains("Essencial")) {
+            planoEscolhido = new PlanoAssinatura("Plano Essencial", 39.90, 5);
+            limitePlano = 5;
+        } else if (selecao.contains("Família")) {
+            planoEscolhido = new PlanoAssinatura("Plano Família", 69.90, 10);
+            limitePlano = 10;
+        } else {
+            planoEscolhido = new PlanoAssinatura("Plano Premium", 99.90, 15);
+            limitePlano = 15;
+        }
+        
+        controller.registrarPlano(planoEscolhido);
 
-            // Exibição formatada por categorias
-            System.out.println("[ FRUTAS ]");
-            for (int i = 0; i < 5; i++) {
-                System.out.printf("  %2d. %-12s - R$ %.2f\n", (i + 1), catalogo[i].getNome(), catalogo[i].getPreco());
-            }
+        exibirJanelaProdutos();
+    }
 
-            System.out.println("\n[ LEGUMES ]");
-            for (int i = 5; i < 10; i++) {
-                System.out.printf("  %2d. %-12s - R$ %.2f\n", (i + 1), catalogo[i].getNome(), catalogo[i].getPreco());
-            }
+    private static void exibirJanelaProdutos() {
+        JFrame frame = new JFrame("Montagem da Cesta");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(500, 650);
+        frame.setLayout(new BorderLayout(15, 15));
 
-            System.out.println("\n[ VERDURAS ]");
-            for (int i = 10; i < 15; i++) {
-                System.out.printf("  %2d. %-12s - R$ %.2f\n", (i + 1), catalogo[i].getNome(), catalogo[i].getPreco());
-            }
+        JPanel panelProdutos = new JPanel();
+        panelProdutos.setLayout(new BoxLayout(panelProdutos, BoxLayout.Y_AXIS));
+        panelProdutos.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JScrollPane scrollPane = new JScrollPane(panelProdutos);
 
-            System.out.println("\n 0. Ir direto para o Pagamento");
-            System.out.println("---------------------------------------");
-            System.out.print("Digite o código do produto (0-15): ");
+        Produto[] catalogo = {
+            new Produto("Maçã", 3.0), new Produto("Banana", 2.5), new Produto("Uva", 4.0),
+            new Produto("Laranja", 2.0), new Produto("Morango", 5.0), new Produto("Cenoura", 2.0),
+            new Produto("Tomate", 2.5), new Produto("Abobrinha", 3.0), new Produto("Batata", 4.0),
+            new Produto("Cebola", 2.0), new Produto("Alface", 3.0), new Produto("Espinafre", 3.5),
+            new Produto("Couve", 2.5), new Produto("Rúcula", 3.0), new Produto("Brócolis", 4.0)
+        };
+
+        Map<Produto, JSpinner> seletores = new HashMap<>();
+
+        for (Produto prod : catalogo) {
+            JPanel itemPanel = new JPanel(new BorderLayout());
+            itemPanel.setMaximumSize(new Dimension(450, 40));
+            itemPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
+
+            JLabel label = new JLabel(prod.getNome() + " - R$ " + String.format("%.2f", prod.getPreco()));
+            // Usando fonte SansSerif (Normal)
+            label.setFont(new Font("SansSerif", Font.PLAIN, 13));
             
-            try {
-                int escolha = Integer.parseInt(scanner.nextLine());
-                
-                if (escolha == 0) {
-                    finalizouCesta = true;
-                } else if (escolha >= 1 && escolha <= 15) {
-                    Produto produtoSelecionado = catalogo[escolha - 1];
-                    System.out.print("Quantidade de " + produtoSelecionado.getNome() + ": ");
-                    int quantidade = Integer.parseInt(scanner.nextLine());
-                    
-                    if (quantidade > 0) {
-                        int espacoLivre = limitePlano - itensNaCesta;
-                        
-                        // Check preditivo de limite
-                        if (quantidade > espacoLivre) {
-                            System.out.print("\n[AVISO] Você pediu " + quantidade + "x, mas há espaço para mais " + espacoLivre + " item(ns). Adicionar " + espacoLivre + "x " + produtoSelecionado.getNome() + "? (S/N): ");
-                            String resposta = scanner.nextLine().toUpperCase();
-                            if (resposta.equals("S")) {
-                                quantidade = espacoLivre;
-                            } else {
-                                System.out.println("Adição cancelada.");
-                                quantidade = 0;
-                                try { Thread.sleep(1500); } catch (InterruptedException ex) {}
-                            }
-                        }
+            JSpinner spinner = new JSpinner(new SpinnerNumberModel(0, 0, limitePlano, 1));
+            seletores.put(prod, spinner);
 
-                        int adicionados = 0;
-                        for (int q = 0; q < quantidade; q++) {
-                            if (controller.adicionarNaCesta(produtoSelecionado).contains("sucesso")) {
-                                itensNaCesta++;
-                                adicionados++;
-                            }
-                        }
-                        
-                        if (adicionados > 0) {
-                            System.out.println("\n✅ " + adicionados + "x " + produtoSelecionado.getNome() + " adicionado(s)!");
-                            
-                            if (itensNaCesta < limitePlano) {
-                                System.out.print("Ainda há espaço na cesta. Deseja ir para o pagamento agora? (S/N): ");
-                                String resposta = scanner.nextLine().toUpperCase();
-                                if (resposta.equals("S")) {
-                                    finalizouCesta = true;
-                                }
-                            } else {
-                                System.out.println("\nLimite do plano atingido! Redirecionando para revisão...");
-                                try { Thread.sleep(2000); } catch (InterruptedException ex) {}
-                                finalizouCesta = true;
-                            }
-                        }
-                    } else {
-                        System.out.println("[AVISO] A quantidade deve ser maior que zero.");
-                        try { Thread.sleep(1500); } catch (InterruptedException ex) {}
-                    }
-                } else {
-                    System.out.println("[AVISO] Produto inexistente. Escolha entre 1 e 15.");
-                    try { Thread.sleep(1500); } catch (InterruptedException ex) {}
+            JPanel pnlQtd = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            pnlQtd.add(new JLabel("Qtd:"));
+            pnlQtd.add(spinner);
+            
+            itemPanel.add(label, BorderLayout.CENTER);
+            itemPanel.add(pnlQtd, BorderLayout.EAST);
+            panelProdutos.add(itemPanel);
+        }
+
+        // BOTÃO PRETO
+        JButton btnAvancar = new JButton("ADICIONAR ITENS E FINALIZAR");
+        btnAvancar.setForeground(Color.BLACK); 
+        btnAvancar.setFont(new Font("SansSerif", Font.BOLD, 13));
+        btnAvancar.setPreferredSize(new Dimension(0, 50));
+        btnAvancar.setFocusPainted(false);
+
+        btnAvancar.addActionListener(e -> {
+            int totalSelecionado = 0;
+            for (JSpinner s : seletores.values()) totalSelecionado += (int) s.getValue();
+
+            if (totalSelecionado > limitePlano) {
+                JOptionPane.showMessageDialog(frame, "Limite excedido!", "Erro", JOptionPane.ERROR_MESSAGE);
+            } else if (totalSelecionado == 0) {
+                JOptionPane.showMessageDialog(frame, "Cesta vazia!");
+            } else {
+                boolean prosseguir = true;
+                if (totalSelecionado < limitePlano) {
+                    int confirm = JOptionPane.showConfirmDialog(frame, "Cesta incompleta. Deseja fechar assim mesmo?", "Confirmar", JOptionPane.YES_NO_OPTION);
+                    if (confirm != JOptionPane.YES_OPTION) prosseguir = false;
                 }
-            } catch (NumberFormatException e) {
-                System.out.println("[ERRO] Digite apenas números válidos.");
-                try { Thread.sleep(1500); } catch (InterruptedException ex) {}
+
+                if (prosseguir) {
+                    for (Map.Entry<Produto, JSpinner> entry : seletores.entrySet()) {
+                        int qtd = (int) entry.getValue().getValue();
+                        for (int i = 0; i < qtd; i++) controller.adicionarNaCesta(entry.getKey());
+                    }
+                    frame.dispose();
+                    irParaPagamento();
+                }
             }
+        });
+
+        frame.add(scrollPane, BorderLayout.CENTER);
+        frame.add(btnAvancar, BorderLayout.SOUTH);
+        frame.setLocationRelativeTo(null); 
+        frame.setVisible(true);
+    }
+
+    private static void irParaPagamento() {
+        // Agrupar produtos para o resumo
+        Map<String, Integer> qtdPorItem = new TreeMap<>();
+        Map<String, Double> precoUnPorItem = new HashMap<>();
+
+        for (Produto p : controller.getItensCesta()) {
+            qtdPorItem.put(p.getNome(), qtdPorItem.getOrDefault(p.getNome(), 0) + 1);
+            precoUnPorItem.put(p.getNome(), p.getPreco());
         }
 
-        // --- TELA 7: REVISAR CESTA ---
-        limparTela();
-        System.out.println("--- REVISAR CESTA [Tela 7] ---");
+        // Criar painel de resumo com fonte normal
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         
-        Map<String, Integer> contagemItens = new HashMap<>();
-        Map<String, Double> precosItens = new HashMap<>();
-        
-        if (controller.getItensCesta() != null) {
-            for (Produto p : controller.getItensCesta()) {
-                contagemItens.put(p.getNome(), contagemItens.getOrDefault(p.getNome(), 0) + 1);
-                precosItens.put(p.getNome(), p.getPreco());
-            }
-        }
+        JLabel title = new JLabel("Resumo da Assinatura");
+        title.setFont(new Font("SansSerif", Font.BOLD, 15));
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mainPanel.add(title);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        double totalEstimadoProdutos = 0.0;
-        System.out.printf("%-15s %-15s %-10s\n", "Item", "Valor Un.", "Qtd");
-        System.out.println("---------------------------------------------");
-        
-        for (String nome : contagemItens.keySet()) {
-            int qtd = contagemItens.get(nome);
-            double precoUn = precosItens.get(nome);
-            double subtotal = qtd * precoUn;
-            totalEstimadoProdutos += subtotal;
+        double somaProdutos = 0;
+        for (String nome : qtdPorItem.keySet()) {
+            int qtd = qtdPorItem.get(nome);
+            double un = precoUnPorItem.get(nome);
+            double sub = qtd * un;
+            somaProdutos += sub;
             
-            System.out.printf("%-15s R$ %-12.2f %-10d\n", nome, precoUn, qtd);
+            JLabel itemLabel = new JLabel(String.format("• %s: %dx R$ %.2f = R$ %.2f", nome, qtd, un, sub));
+            itemLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            itemLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            mainPanel.add(itemLabel);
         }
-        
-        System.out.println("---------------------------------------------");
-        System.out.printf("Total Estimado dos Produtos: R$ %.2f\n", totalEstimadoProdutos);
-        
-        System.out.print("\n[Pressione ENTER para ir ao pagamento...]");
-        scanner.nextLine();
 
-        // --- TELA 8: PAGAMENTO ---
-        limparTela();
-        System.out.println("--- PAGAMENTO E FINALIZAÇÃO [Tela 8] ---");
-        System.out.println("Plano Contratado: " + planoEscolhido.getNomePlano());
-        System.out.println("Valor da Assinatura: R$ " + String.format("%.2f", planoEscolhido.getValor()));
-        
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        mainPanel.add(new JSeparator());
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        JLabel totalItens = new JLabel("Soma dos itens: R$ " + String.format("%.2f", somaProdutos));
+        totalItens.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        mainPanel.add(totalItens);
+
+        JLabel totalPlano = new JLabel("Valor do Plano (" + planoEscolhido.getNomePlano() + "): R$ " + String.format("%.2f", planoEscolhido.getValor()));
+        totalPlano.setFont(new Font("SansSerif", Font.BOLD, 14));
+        mainPanel.add(totalPlano);
+
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        JLabel cardLabel = new JLabel("Informe os 16 dígitos do seu cartão:");
+        cardLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        mainPanel.add(cardLabel);
+
+        // Pedir o cartão
         String cartao = "";
         while (true) {
-            System.out.print("\n5. Informe o número do Cartão (16 dígitos): ");
-            cartao = scanner.nextLine();
+            cartao = JOptionPane.showInputDialog(null, mainPanel, "Pagamento", JOptionPane.QUESTION_MESSAGE);
+            
+            if (cartao == null) System.exit(0);
             if (cartao.replaceAll("[^0-9]", "").length() == 16) break;
-            System.out.println("[AVISO] O cartão deve conter 16 números.");
+            
+            JOptionPane.showMessageDialog(null, "O cartão deve conter 16 números!", "Erro", JOptionPane.ERROR_MESSAGE);
         }
 
         String protocolo = controller.finalizarAssinatura(cartao);
         
-        // --- CONFIRMAÇÃO FINAL ---
-        limparTela();
-        System.out.println("========================================");
-        System.out.println("       ASSINATURA CONCLUÍDA             ");
-        System.out.println("========================================");
-        System.out.println("\n✅ Pagamento Aprovado com sucesso!");
-        System.out.println("Protocolo de confirmação: " + protocolo);
-        System.out.println("Plano: " + planoEscolhido.getNomePlano());
-        System.out.println("\nOs detalhes foram salvos em 'assinaturas.txt'.");
-        System.out.println("----------------------------------------");
-        
-        System.out.println("\n[Pressione ENTER para fechar o programa...]");
-        scanner.nextLine(); 
-        
-        scanner.close();
-        System.out.println("Encerrando sistema...");
+        // Mensagem final
+        String finalMsg = "Sucesso! Seu protocolo é: " + protocolo + "\n\nO comprovante foi salvo em 'assinaturas.txt'.";
+        JOptionPane.showMessageDialog(null, finalMsg, "Assinatura Concluída", JOptionPane.INFORMATION_MESSAGE);
+        System.exit(0);
     }
 }
