@@ -1,3 +1,5 @@
+package models;
+
 public class Assinante {
     private String celular;
     private PlanoAssinatura plano;

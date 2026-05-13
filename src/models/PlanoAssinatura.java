@@ -1,3 +1,5 @@
+package models;
+
 public class PlanoAssinatura {
     private String nomePlano;
     private double valor;

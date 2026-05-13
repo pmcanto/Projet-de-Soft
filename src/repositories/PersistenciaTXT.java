@@ -1,3 +1,9 @@
+package repositories;
+
+import models.Assinante;
+import models.CestaSemanal;
+import models.Produto;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;

@@ -30,7 +30,20 @@ cd src
 
 ### Passo 2: Compile os arquivos
 ```bash
-javac *.java
+javac views/InterfaceApp.java
 
 ### Passo 3: Executar a aplicação
-java InterfaceApp
+```bash
+java views.InterfaceApp
+
+### OU
+
+### Passo B: rodar script
+```bash
+chmod +x executar.sh
+./executar.sh
+
+### Passo Final/Inicial: Limpar arquivos
+```bash
+chmod +x limpar.sh
+./limpar.sh
