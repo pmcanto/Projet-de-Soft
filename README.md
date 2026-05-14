@@ -1,6 +1,6 @@
 ========================================================================
     SISTEMA DE ASSINATURA - SERVIÇO DE FEIRA (ENTREGA N2)
-========================================================================
+==========================================================================
 
 Este repositório contém a implementação funcional do Caso de Uso "Assinar 
 Serviço de Feira", desenvolvida para a disciplina de Projeto de Software.
@@ -41,7 +41,6 @@ No LINUX / CODESPACES:
 ------------------------------------------------------------------------
 4. COMO EXECUTAR MANUALMENTE (TERMINAL)
 ------------------------------------------------------------------------
-Caso prefira realizar os passos um a um:
 
 1. Abra o terminal na pasta raiz do projeto.
 
@@ -69,5 +68,5 @@ Via Terminal (Manual):
     Linux:   find . -name "*.class" -type f -delete
 
 ========================================================================
-Link para o Vídeo na Wiki: [INSIRA O LINK AQUI]
-========================================================================
+Link para o Vídeo na Wiki: <LINK>
+==========================================================================
