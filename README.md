@@ -1,6 +1,5 @@
 ========================================================================
-    SISTEMA DE ASSINATURA - SERVIÇO DE FEIRA (ENTREGA N2)
-========================================================================
+    #SISTEMA DE ASSINATURA - SERVIÇO DE FEIRA (ENTREGA N2)
 
 Este repositório contém a implementação funcional do Caso de Uso "Assinar 
 Serviço de Feira", desenvolvida para a disciplina de Projeto de Software.
@@ -67,6 +66,6 @@ Via Terminal (Manual):
     Windows: del /s /q *.class
     Linux:   find . -name "*.class" -type f -delete
 
-========================================================================
+
 Link para o Vídeo na Wiki: <LINK>
-==========================================================================
+========================================================================
