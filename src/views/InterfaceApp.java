@@ -55,7 +55,7 @@ public class InterfaceApp {
         JPanel header = new JPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
         header.setBackground(new Color(245, 245, 245));
-        header.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        header.setBorder(BorderFactory.createEmptyBorder(20, 0, 15, 0));
 
         JLabel lblTitulo = new JLabel(titulo, JLabel.CENTER);
         lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -75,30 +75,23 @@ public class InterfaceApp {
     private static void exibirTelaLogin() {
         frame.getContentPane().removeAll();
         frame.setLayout(new BorderLayout());
-
         frame.add(criarHeader("BEM-VINDO", "Identifique-se para começar"), BorderLayout.NORTH);
 
         JPanel corpo = new JPanel(new GridBagLayout());
         corpo.setBackground(Color.WHITE);
-        GridBagConstraints gbc = new GridBagConstraints();
         
-        // --- MESMO DESIGN DA TELA DE SMS ---
         JTextField txtCelular = new JTextField(12);
         txtCelular.setHorizontalAlignment(JTextField.CENTER);
         txtCelular.setFont(new Font("SansSerif", Font.BOLD, 20));
         txtCelular.setBorder(BorderFactory.createTitledBorder("Celular (com DDD)"));
         
-        // Bloqueia letras e limita a 11 números no celular
         txtCelular.addKeyListener(new KeyAdapter() {
             public void keyTyped(KeyEvent e) {
-                if (!Character.isDigit(e.getKeyChar()) || txtCelular.getText().length() >= 11) {
-                    e.consume(); 
-                }
+                if (!Character.isDigit(e.getKeyChar()) || txtCelular.getText().length() >= 11) e.consume();
             }
         });
         
-        gbc.gridx = 0; gbc.gridy = 0;
-        corpo.add(txtCelular, gbc);
+        corpo.add(txtCelular);
         frame.add(corpo, BorderLayout.CENTER);
 
         JButton btnLogin = criarBotaoPrincipal("ENVIAR CÓDIGO");
@@ -113,7 +106,6 @@ public class InterfaceApp {
             }
         });
         frame.add(btnLogin, BorderLayout.SOUTH);
-
         frame.revalidate();
         frame.repaint();
     }
@@ -124,19 +116,14 @@ public class InterfaceApp {
 
         JPanel corpo = new JPanel(new GridBagLayout());
         corpo.setBackground(Color.WHITE);
-        
-        // --- DESIGN DE SMS ---
         JTextField txtToken = new JTextField(10);
         txtToken.setHorizontalAlignment(JTextField.CENTER);
         txtToken.setFont(new Font("SansSerif", Font.BOLD, 20));
         txtToken.setBorder(BorderFactory.createTitledBorder("Código de 4 dígitos"));
         
-        // Limita o SMS a 4 números
         txtToken.addKeyListener(new KeyAdapter() {
             public void keyTyped(KeyEvent e) {
-                if (!Character.isDigit(e.getKeyChar()) || txtToken.getText().length() >= 4) {
-                    e.consume(); 
-                }
+                if (!Character.isDigit(e.getKeyChar()) || txtToken.getText().length() >= 4) e.consume();
             }
         });
 
@@ -153,7 +140,6 @@ public class InterfaceApp {
             }
         });
         frame.add(btnValidar, BorderLayout.SOUTH);
-
         frame.revalidate();
         frame.repaint();
     }
@@ -167,7 +153,7 @@ public class InterfaceApp {
         corpo.setBackground(Color.WHITE);
         corpo.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        String[] opcoes = {"Plano Essencial - R$ 39,90", "Plano Família - R$ 69,90", "Plano Premium - R$ 99,90"};
+        String[] opcoes = {"Plano Essencial - R$ 39,90 - 5 Produtos", "Plano Família - R$ 69,90 - 10 Produtos", "Plano Premium - R$ 99,90 - 15 Produtos"};
         DefaultListModel<String> model = new DefaultListModel<>();
         for (String s : opcoes) model.addElement(s);
         JList<String> listaPlanos = new JList<>(model);
@@ -189,14 +175,20 @@ public class InterfaceApp {
             exibirTelaProdutos();
         });
         frame.add(btnPlano, BorderLayout.SOUTH);
-
         frame.revalidate();
         frame.repaint();
     }
 
     private static void exibirTelaProdutos() {
         frame.getContentPane().removeAll();
-        frame.add(criarHeader("MONTE SUA CESTA", "Limite: " + limitePlano + " itens"), BorderLayout.NORTH);
+        
+        // --- CABEÇALHO COM CONTADOR DINÂMICO ---
+        JPanel header = criarHeader("MONTE SUA CESTA", planoEscolhido.getNomePlano());
+        JLabel lblContador = new JLabel("Itens: 0 / " + limitePlano, JLabel.CENTER);
+        lblContador.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblContador.setAlignmentX(Component.CENTER_ALIGNMENT);
+        header.add(lblContador);
+        frame.add(header, BorderLayout.NORTH);
 
         JPanel panelProdutos = new JPanel();
         panelProdutos.setLayout(new BoxLayout(panelProdutos, BoxLayout.Y_AXIS));
@@ -220,8 +212,16 @@ public class InterfaceApp {
             item.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
             JLabel name = new JLabel("<html>" + prod.getNome() + "<br><font color='gray'>R$ " + String.format("%.2f", prod.getPreco()) + "</font></html>");
-            JSpinner spin = new JSpinner(new SpinnerNumberModel(0, 0, limitePlano, 1));
+            JSpinner spin = new JSpinner(new SpinnerNumberModel(0, 0, 99, 1)); // Limite alto no spinner para permitir o aviso de erro
             
+            // ATUALIZAÇÃO DO CONTADOR EM TEMPO REAL
+            spin.addChangeListener(e -> {
+                int total = 0;
+                for (JSpinner s : seletores.values()) total += (int) s.getValue();
+                lblContador.setText("Itens: " + total + " / " + limitePlano);
+                lblContador.setForeground(total > limitePlano ? Color.RED : new Color(34, 139, 34)); // Verde se ok, vermelho se erro
+            });
+
             seletores.put(prod, spin);
             item.add(name, BorderLayout.CENTER);
             item.add(spin, BorderLayout.EAST);
@@ -234,8 +234,8 @@ public class InterfaceApp {
             int total = 0;
             for (JSpinner s : seletores.values()) total += (int) s.getValue();
 
-            if (total > limitePlano) JOptionPane.showMessageDialog(frame, "Limite excedido!");
-            else if (total == 0) JOptionPane.showMessageDialog(frame, "Selecione algo!");
+            if (total > limitePlano) JOptionPane.showMessageDialog(frame, "Limite excedido! Remova " + (total - limitePlano) + " item(ns).", "Atenção", JOptionPane.WARNING_MESSAGE);
+            else if (total == 0) JOptionPane.showMessageDialog(frame, "Selecione ao menos um produto.");
             else {
                 for (Map.Entry<Produto, JSpinner> entry : seletores.entrySet()) {
                     for (int i = 0; i < (int) entry.getValue().getValue(); i++) controller.adicionarNaCesta(entry.getKey());
@@ -245,14 +245,13 @@ public class InterfaceApp {
         });
         frame.add(scrollPane, BorderLayout.CENTER);
         frame.add(btnCesta, BorderLayout.SOUTH);
-
         frame.revalidate();
         frame.repaint();
     }
 
     private static void exibirTelaPagamento() {
         frame.getContentPane().removeAll();
-        frame.add(criarHeader("PAGAMENTO", "Confira os itens selecionados"), BorderLayout.NORTH);
+        frame.add(criarHeader("PAGAMENTO", "Confira seu resumo"), BorderLayout.NORTH);
 
         JPanel corpo = new JPanel();
         corpo.setLayout(new BoxLayout(corpo, BoxLayout.Y_AXIS));
@@ -278,9 +277,7 @@ public class InterfaceApp {
 
         corpo.add(Box.createRigidArea(new Dimension(0, 15)));
         corpo.add(new JSeparator());
-        corpo.add(Box.createRigidArea(new Dimension(0, 5)));
-        
-        JLabel lblTotal = new JLabel("TOTAL DO PLANO: R$ " + String.format("%.2f", planoEscolhido.getValor()));
+        JLabel lblTotal = new JLabel("VALOR DO PLANO: R$ " + String.format("%.2f", planoEscolhido.getValor()));
         lblTotal.setFont(new Font("SansSerif", Font.BOLD, 14));
         corpo.add(lblTotal);
 
@@ -288,7 +285,6 @@ public class InterfaceApp {
         scrollResumo.setBorder(null);
         frame.add(scrollResumo, BorderLayout.CENTER);
 
-        // --- RODAPÉ: CARTÃO DE CRÉDITO COM LIMITE FÍSICO ---
         JPanel footer = new JPanel(new BorderLayout());
         footer.setBackground(new Color(245, 245, 245));
         footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.LIGHT_GRAY));
@@ -296,34 +292,20 @@ public class InterfaceApp {
         JPanel pnlCartao = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 15));
         pnlCartao.setBackground(new Color(245, 245, 245));
         
-        JLabel lblCartao = new JLabel("Cartão: ");
-        lblCartao.setFont(new Font("SansSerif", Font.BOLD, 12));
-        pnlCartao.add(lblCartao);
-
         JTextField[] camposCartao = new JTextField[4];
         for (int i = 0; i < 4; i++) {
             camposCartao[i] = new JTextField(5);
             camposCartao[i].setHorizontalAlignment(JTextField.CENTER);
             camposCartao[i].setFont(new Font("Monospaced", Font.BOLD, 14));
-            
             final int index = i;
             camposCartao[i].addKeyListener(new KeyAdapter() {
-                // TRAVA DE CARACTERES
                 public void keyTyped(KeyEvent e) {
-                    char c = e.getKeyChar();
-                    if (!Character.isDigit(c) || camposCartao[index].getText().length() >= 4) {
-                        e.consume(); 
-                    }
+                    if (!Character.isDigit(e.getKeyChar()) || camposCartao[index].getText().length() >= 4) e.consume();
                 }
-                
-                // PULO AUTOMÁTICO
                 public void keyReleased(KeyEvent e) {
-                    if (camposCartao[index].getText().length() == 4 && index < 3) {
-                        camposCartao[index + 1].requestFocus();
-                    }
+                    if (camposCartao[index].getText().length() == 4 && index < 3) camposCartao[index + 1].requestFocus();
                 }
             });
-            
             pnlCartao.add(camposCartao[i]);
             if (i < 3) pnlCartao.add(new JLabel("-"));
         }
@@ -332,21 +314,17 @@ public class InterfaceApp {
 
         JButton btnFinal = criarBotaoPrincipal("CONFIRMAR ASSINATURA");
         btnFinal.addActionListener(e -> {
-            String cartaoCompleto = camposCartao[0].getText() + camposCartao[1].getText() + 
-                                    camposCartao[2].getText() + camposCartao[3].getText();
-            
-            if (cartaoCompleto.length() == 16) {
-                String protocolo = controller.finalizarAssinatura(cartaoCompleto);
+            String cartao = camposCartao[0].getText() + camposCartao[1].getText() + camposCartao[2].getText() + camposCartao[3].getText();
+            if (cartao.length() == 16) {
+                String protocolo = controller.finalizarAssinatura(cartao);
                 JOptionPane.showMessageDialog(frame, "Sucesso!\nProtocolo: " + protocolo);
                 System.exit(0);
             } else {
-                JOptionPane.showMessageDialog(frame, "Preencha todos os 16 dígitos do cartão!", "Erro", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(frame, "Cartão inválido!");
             }
         });
-        
         footer.add(btnFinal, BorderLayout.SOUTH);
         frame.add(footer, BorderLayout.SOUTH);
-
         frame.revalidate();
         frame.repaint();
     }
